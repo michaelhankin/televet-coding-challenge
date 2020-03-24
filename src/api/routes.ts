@@ -14,6 +14,30 @@ const getPet: RequestHandler<{ id: string }> = (req, res) => {
   }
 };
 
-router.get("/pet/:id", getPet);
+const getPets: RequestHandler<{}> = (req, res) => {
+  const start = Number(req.query.start) || 0;
+  const offset = Number(req.query.offset) || 10;
+
+  const sortedPets = Object.entries(pets)
+    .map(([id, { name, weight, age }]) => {
+      return { id: Number(id), name, weight, age };
+    })
+    .sort((petA, petB) => {
+      if (petA.id < petB.id) {
+        return -1;
+      } else if (petA.id > petB.id) {
+        return 1;
+      }
+      return 0;
+    });
+
+  const page = sortedPets.slice(start, start + offset);
+
+  res.send({
+    pets: page
+  });
+};
+
+router.get("/pet/:id", getPet).get("/pets", getPets);
 
 export default router;

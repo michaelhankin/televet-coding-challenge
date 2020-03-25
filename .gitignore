@@ -1,2 +1,8 @@
 node_modules
-dist/**/*
+
+dist
+build
+
+.DS_Store
+
+npm-debug.log*

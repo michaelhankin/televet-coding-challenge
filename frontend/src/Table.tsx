@@ -21,7 +21,11 @@ const generateGetPetsEndpointUrl = (queryParams: GetPetsQueryParams) => {
   return `${ENDPOINT_URL}?${searchParams.toString()}`;
 };
 
-const Table: React.FC = () => {
+type TableProps = {
+  setSelectedPet: (pet: Pet) => void;
+};
+
+const Table: React.FC<TableProps> = ({ setSelectedPet }) => {
   const [page, setPage] = useState<Pet[]>([]);
   const [total, setTotal] = useState(0);
   const [start, setStart] = useState(0);
@@ -29,6 +33,7 @@ const Table: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortBy>("id");
   const [order, setOrder] = useState<Order>("asc");
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const fetchPets = async (queryParams: GetPetsQueryParams) => {
     const endpointUrl = generateGetPetsEndpointUrl(queryParams);
@@ -37,6 +42,9 @@ const Table: React.FC = () => {
 
     setPage(pets);
     setTotal(total);
+    if (loading) {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -67,7 +75,7 @@ const Table: React.FC = () => {
 
   return (
     <div>
-      {page.length === 0 ? (
+      {loading ? (
         <span>Loading...</span>
       ) : (
         <>
@@ -76,75 +84,89 @@ const Table: React.FC = () => {
             placeholder="Search..."
             value={search}
             onChange={event => {
+              // Reset on search
+              setStart(0);
               setSearch(event.target.value);
             }}
           />
-          <table>
-            <thead>
-              <tr>
-                <th
-                  onClick={() => {
-                    handleSort("id");
-                  }}
-                  className={
-                    sortBy === "id"
-                      ? order === "asc"
-                        ? "col-selected-asc"
-                        : "col-selected-desc"
-                      : ""
-                  }
-                >
-                  ID
-                </th>
-                <th
-                  onClick={() => {
-                    handleSort("name");
-                  }}
-                  className={
-                    sortBy === "name"
-                      ? order === "asc"
-                        ? "col-selected-asc"
-                        : "col-selected-desc"
-                      : ""
-                  }
-                >
-                  Name
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {page.length === 0 ? (
-                <tr>
-                  <td>Loading...</td>
-                </tr>
-              ) : (
-                page.map(item => {
-                  return (
-                    <tr key={item.id}>
-                      <td>{item.id}</td>
-                      <td>{item.name}</td>
+          {page.length === 0 ? (
+            <p>No results found.</p>
+          ) : (
+            <>
+              <table>
+                <thead>
+                  <tr>
+                    <th
+                      onClick={() => {
+                        handleSort("id");
+                      }}
+                      className={
+                        sortBy === "id"
+                          ? order === "asc"
+                            ? "col-selected-asc"
+                            : "col-selected-desc"
+                          : ""
+                      }
+                    >
+                      ID
+                    </th>
+                    <th
+                      onClick={() => {
+                        handleSort("name");
+                      }}
+                      className={
+                        sortBy === "name"
+                          ? order === "asc"
+                            ? "col-selected-asc"
+                            : "col-selected-desc"
+                          : ""
+                      }
+                    >
+                      Name
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {page.length === 0 ? (
+                    <tr>
+                      <td>Loading...</td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-          <button
-            disabled={start === 0}
-            onClick={() => {
-              prevPage();
-            }}
-          >
-            Previous Page
-          </button>
-          <button
-            disabled={start + limit >= total}
-            onClick={() => {
-              nextPage();
-            }}
-          >
-            Next Page
-          </button>
+                  ) : (
+                    page.map(pet => {
+                      return (
+                        <tr key={pet.id}>
+                          <td>{pet.id}</td>
+                          <td
+                            onClick={() => {
+                              setSelectedPet(pet);
+                            }}
+                          >
+                            {pet.name}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+              <button
+                disabled={start === 0}
+                onClick={() => {
+                  prevPage();
+                }}
+              >
+                Previous Page
+              </button>
+              <button
+                disabled={start + limit >= total}
+                onClick={() => {
+                  nextPage();
+                }}
+              >
+                Next Page
+              </button>
+            </>
+          )}
         </>
       )}
     </div>

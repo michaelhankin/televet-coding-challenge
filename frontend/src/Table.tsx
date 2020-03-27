@@ -1,10 +1,9 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { useTable } from "react-table";
 import { Pet, GetPetsQueryParams, GetPetsResponse } from "./types";
 
 import "./Table.scss";
 
-const PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 10;
 const ENDPOINT_URL = "http://localhost:8000/pets";
 
 const generateGetPetsEndpointUrl = (queryParams: GetPetsQueryParams) => {
@@ -20,7 +19,7 @@ const Table: React.FC = () => {
   const [page, setPage] = useState<Pet[]>([]);
   const [total, setTotal] = useState(0);
   const [start, setStart] = useState(0);
-  const [limit, setLimit] = useState(PAGE_SIZE);
+  const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
   const [sortBy, setSortBy] = useState<keyof Pet>("id");
   const [order, setOrder] = useState<"asc" | "desc">("asc");
   const [search, setSearch] = useState("");
@@ -41,51 +40,34 @@ const Table: React.FC = () => {
     fetchPets({ start, limit, sortBy, order, search });
   }, [start, limit, sortBy, order, search]);
 
-  const columns = useMemo(
-    () => [
-      {
-        Header: "ID",
-        accessor: "id"
-      },
-      {
-        Header: "Name",
-        accessor: "name"
-      }
-    ],
-    []
-  );
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headers,
-    rows,
-    prepareRow
-  } = useTable({ columns, data: page });
+  const nextPage = () => {
+    setStart(prevStart => {
+      return prevStart + limit;
+    });
+  };
+
+  const prevPage = () => {
+    setStart(prevStart => {
+      return prevStart - limit;
+    });
+  };
 
   return (
     <div>
-      <table {...getTableProps()}>
+      <table>
         <thead>
-          {headers.map(column => {
-            return (
-              <th {...column.getHeaderProps()}>{column.render("Header")}</th>
-            );
-          })}
+          <th>ID</th>
+          <th>Name</th>
         </thead>
-        <tbody {...getTableBodyProps()}>
+        <tbody>
           {loading ? (
             <span>Loading...</span>
           ) : (
-            rows.map(row => {
-              prepareRow(row);
-
+            page.map(item => {
               return (
-                <tr {...row.getRowProps()}>
-                  {row.cells.map(cell => {
-                    return (
-                      <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
-                    );
-                  })}
+                <tr>
+                  <td>{item.id}</td>
+                  <td>{item.name}</td>
                 </tr>
               );
             })
@@ -93,15 +75,17 @@ const Table: React.FC = () => {
         </tbody>
       </table>
       <button
+        disabled={start === 0}
         onClick={() => {
-          // previousPage();
+          prevPage();
         }}
       >
         Previous Page
       </button>
       <button
+        disabled={start + limit >= total}
         onClick={() => {
-          // nextPage();
+          nextPage();
         }}
       >
         Next Page

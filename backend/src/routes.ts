@@ -78,7 +78,7 @@ const getPets: RequestHandler<{}> = (req, res) => {
 
   res.send({
     pets: page,
-    total: Object.entries(pets).length
+    total: filteredPets.length
   });
 };
 

@@ -71,6 +71,14 @@ const Table: React.FC = () => {
         <span>Loading...</span>
       ) : (
         <>
+          <input
+            type="text"
+            placeholder="Search..."
+            value={search}
+            onChange={event => {
+              setSearch(event.target.value);
+            }}
+          />
           <table>
             <thead>
               <tr>

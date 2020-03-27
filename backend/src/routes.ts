@@ -52,7 +52,13 @@ const getPets: RequestHandler<{}> = (req, res) => {
     return;
   }
 
-  const sortedPets = Object.entries(pets)
+  const search = req.query.search || "";
+  if (!(typeof search === "string")) {
+    res.status(400).send("search must be a string");
+    return;
+  }
+
+  const filteredPets = Object.entries(pets)
     .map(([id, { name, weight, age }]) => {
       return { id: Number(id), name, weight, age };
     })
@@ -63,12 +69,16 @@ const getPets: RequestHandler<{}> = (req, res) => {
         return order === "asc" ? 1 : -1;
       }
       return 0;
+    })
+    .filter(pet => {
+      return pet.name.includes(search);
     });
 
-  const page = sortedPets.slice(start, start + limit);
+  const page = filteredPets.slice(start, start + limit);
 
   res.send({
-    pets: page
+    pets: page,
+    total: Object.entries(pets).length
   });
 };
 

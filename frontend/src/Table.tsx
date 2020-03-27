@@ -1,5 +1,11 @@
-import React, { useMemo, useState, useEffect } from "react";
-import { Pet, GetPetsQueryParams, GetPetsResponse } from "./types";
+import React, { useState, useEffect } from "react";
+import {
+  Pet,
+  GetPetsQueryParams,
+  GetPetsResponse,
+  SortBy,
+  Order
+} from "./types";
 
 import "./Table.scss";
 
@@ -20,20 +26,17 @@ const Table: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [start, setStart] = useState(0);
   const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
-  const [sortBy, setSortBy] = useState<keyof Pet>("id");
-  const [order, setOrder] = useState<"asc" | "desc">("asc");
+  const [sortBy, setSortBy] = useState<SortBy>("id");
+  const [order, setOrder] = useState<Order>("asc");
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const fetchPets = async (queryParams: GetPetsQueryParams) => {
-    setLoading(true);
     const endpointUrl = generateGetPetsEndpointUrl(queryParams);
     const resp = await fetch(endpointUrl);
     const { pets, total }: GetPetsResponse = await resp.json();
 
     setPage(pets);
     setTotal(total);
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -52,44 +55,90 @@ const Table: React.FC = () => {
     });
   };
 
+  const handleSort = (newSortBy: SortBy) => {
+    if (sortBy === newSortBy) {
+      setOrder(order === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(newSortBy);
+      // Default to asc
+      setOrder("asc");
+    }
+  };
+
   return (
     <div>
-      <table>
-        <thead>
-          <th>ID</th>
-          <th>Name</th>
-        </thead>
-        <tbody>
-          {loading ? (
-            <span>Loading...</span>
-          ) : (
-            page.map(item => {
-              return (
+      {page.length === 0 ? (
+        <span>Loading...</span>
+      ) : (
+        <>
+          <table>
+            <thead>
+              <tr>
+                <th
+                  onClick={() => {
+                    handleSort("id");
+                  }}
+                  className={
+                    sortBy === "id"
+                      ? order === "asc"
+                        ? "col-selected-asc"
+                        : "col-selected-desc"
+                      : ""
+                  }
+                >
+                  ID
+                </th>
+                <th
+                  onClick={() => {
+                    handleSort("name");
+                  }}
+                  className={
+                    sortBy === "name"
+                      ? order === "asc"
+                        ? "col-selected-asc"
+                        : "col-selected-desc"
+                      : ""
+                  }
+                >
+                  Name
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {page.length === 0 ? (
                 <tr>
-                  <td>{item.id}</td>
-                  <td>{item.name}</td>
+                  <td>Loading...</td>
                 </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
-      <button
-        disabled={start === 0}
-        onClick={() => {
-          prevPage();
-        }}
-      >
-        Previous Page
-      </button>
-      <button
-        disabled={start + limit >= total}
-        onClick={() => {
-          nextPage();
-        }}
-      >
-        Next Page
-      </button>
+              ) : (
+                page.map(item => {
+                  return (
+                    <tr key={item.id}>
+                      <td>{item.id}</td>
+                      <td>{item.name}</td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+          <button
+            disabled={start === 0}
+            onClick={() => {
+              prevPage();
+            }}
+          >
+            Previous Page
+          </button>
+          <button
+            disabled={start + limit >= total}
+            onClick={() => {
+              nextPage();
+            }}
+          >
+            Next Page
+          </button>
+        </>
+      )}
     </div>
   );
 };

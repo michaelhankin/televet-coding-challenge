@@ -10,10 +10,14 @@ export type GetPetsResponse = {
   total: number;
 };
 
+export type SortBy = keyof Pet;
+
+export type Order = "asc" | "desc";
+
 export type GetPetsQueryParams = {
   start: number;
   limit: number;
-  sortBy: keyof Pet;
-  order: "asc" | "desc";
+  sortBy: SortBy;
+  order: Order;
   search: string;
 };

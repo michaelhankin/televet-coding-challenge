@@ -1,6 +1,5 @@
 import express, { RequestHandler } from "express";
 import pets from "./data/pets";
-import { Pet } from "./types";
 
 const router = express.Router();
 
@@ -40,9 +39,9 @@ const getPets: RequestHandler<{}> = (req, res) => {
     return;
   }
 
-  const sortBy: keyof Pet = req.query.sortBy || "id";
-  if (!["id", "name", "weight", "age"].includes(sortBy)) {
-    res.status(400).send("sortBy must be one of: id, name, weight, age");
+  const sortBy: "id" | "name" = req.query.sortBy || "id";
+  if (!["id", "name"].includes(sortBy)) {
+    res.status(400).send("sortBy must be one of: id, name");
     return;
   }
 
@@ -59,8 +58,8 @@ const getPets: RequestHandler<{}> = (req, res) => {
   }
 
   const filteredPets = Object.entries(pets)
-    .map(([id, { name, weight, age }]) => {
-      return { id: Number(id), name, weight, age };
+    .map(([id, { name }]) => {
+      return { id: Number(id), name };
     })
     .sort((petA, petB) => {
       if (petA[sortBy] < petB[sortBy]) {

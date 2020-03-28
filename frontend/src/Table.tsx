@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Pet,
   GetPetsQueryParams,
@@ -6,11 +6,11 @@ import {
   SortBy,
   Order
 } from "./types";
+import { API_URL } from "./constants";
 
 import "./Table.scss";
 
 const DEFAULT_PAGE_SIZE = 10;
-const ENDPOINT_URL = "http://localhost:8000/pets";
 
 const generateGetPetsEndpointUrl = (queryParams: GetPetsQueryParams) => {
   const searchParams = new URLSearchParams(
@@ -18,11 +18,11 @@ const generateGetPetsEndpointUrl = (queryParams: GetPetsQueryParams) => {
       return [key, value.toString()];
     })
   );
-  return `${ENDPOINT_URL}?${searchParams.toString()}`;
+  return `${API_URL}/pets?${searchParams.toString()}`;
 };
 
 type TableProps = {
-  setSelectedPet: (pet: Pet) => void;
+  setSelectedPet: (petId: number) => Promise<void>;
 };
 
 const Table: React.FC<TableProps> = ({ setSelectedPet }) => {
@@ -35,21 +35,24 @@ const Table: React.FC<TableProps> = ({ setSelectedPet }) => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const fetchPets = async (queryParams: GetPetsQueryParams) => {
-    const endpointUrl = generateGetPetsEndpointUrl(queryParams);
-    const resp = await fetch(endpointUrl);
-    const { pets, total }: GetPetsResponse = await resp.json();
+  const fetchPets = useCallback(
+    async (queryParams: GetPetsQueryParams) => {
+      const endpointUrl = generateGetPetsEndpointUrl(queryParams);
+      const resp = await fetch(endpointUrl);
+      const { pets, total }: GetPetsResponse = await resp.json();
 
-    setPage(pets);
-    setTotal(total);
-    if (loading) {
-      setLoading(false);
-    }
-  };
+      setPage(pets);
+      setTotal(total);
+      if (loading) {
+        setLoading(false);
+      }
+    },
+    [loading]
+  );
 
   useEffect(() => {
     fetchPets({ start, limit, sortBy, order, search });
-  }, [start, limit, sortBy, order, search]);
+  }, [start, limit, sortBy, order, search, fetchPets]);
 
   const nextPage = () => {
     setStart(prevStart => {
@@ -137,8 +140,8 @@ const Table: React.FC<TableProps> = ({ setSelectedPet }) => {
                         <tr key={pet.id}>
                           <td>{pet.id}</td>
                           <td
-                            onClick={() => {
-                              setSelectedPet(pet);
+                            onClick={async () => {
+                              await setSelectedPet(pet.id);
                             }}
                           >
                             {pet.name}
@@ -165,6 +168,19 @@ const Table: React.FC<TableProps> = ({ setSelectedPet }) => {
               >
                 Next Page
               </button>
+              <div>
+                <span>Page size</span>
+                <select
+                  value={limit}
+                  onChange={event => {
+                    setLimit(Number(event.target.value));
+                  }}
+                >
+                  <option>5</option>
+                  <option>10</option>
+                  <option>25</option>
+                </select>
+              </div>
             </>
           )}
         </>
